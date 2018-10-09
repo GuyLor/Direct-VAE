@@ -3,6 +3,7 @@
 Implementation of direct optimization paper.
 
 discrete_vae: contains discrete vae model [mnist, omniglot datasets]
+
 mixture_model_mnist: contains mixture of gaussian and discrete vae (unsupervised or semi-supervised) [mnist]
 
 The above are optimized with direct optimization and with gumbel-softmax.
