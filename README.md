@@ -17,3 +17,4 @@ Python 2.7
 Pytorch 0.4.0
 (REBAR_RELAX: Tensorflow)
 
+The datasets are downloaded automatically if they don't exist
