@@ -1,6 +1,6 @@
 # direct_vae
 
-Implementation of direct optimization paper.
+Implementation of direct optimization paper. https://arxiv.org/abs/1806.02867
 
 discrete_vae: contains discrete vae model [mnist, omniglot datasets]
 
