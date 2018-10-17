@@ -38,8 +38,8 @@ class Encoder(nn.Module):
         # hard:
         _, k = phi_x_gamma.data.max(-1)
 
-        z = torch.FloatTensor(*shape).zero_().scatter_(-1, k.view(-1, 1), 1.0)
-        z_phi_gamma = to_var(z)
+        z_phi_gamma = to_var(torch.FloatTensor(*shape)).zero_().scatter_(-1, k.view(-1, 1), 1.0)
+
         return z_phi_gamma,phi_x_gamma
 
 class Decoder(nn.Module):
