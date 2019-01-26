@@ -10,5 +10,5 @@ REBAR, RELAX, ARM:  only for binary latent variables, based on https://github.co
 
 To run the above, use the scripts run_direct_gsm.py, run_mixture.py, run_relax_rebar.py, run_ARM.py respectively. <br />
 
-In addition, an impementation of structured vae is avilable only with direct_vae, check out the paper for more details. run_structured_dvae.py 
+In addition, an impementation of structured vae is available only with direct_vae, check out the paper for more details. run_structured_dvae.py 
 
