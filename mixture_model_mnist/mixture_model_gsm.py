@@ -34,7 +34,7 @@ def gumbel_softmax(logits, tau=1, hard=False, eps=1e-10):
     y_soft = gumbel_softmax_sample(logits, tau=tau, eps=eps)
 
     if hard:
-        _, k = y_soft.data.max(-1)
+        _, k = y_soft.max(-1)
 
         y_hard = torch.FloatTensor(*shape).zero_().scatter_(-1, k.view(-1, 1).cpu(), 1.0)
 
@@ -166,9 +166,9 @@ class Mixture_Model:
         H = 400
         self.tau = params['eps_0']
         self.vae = VAE(h_dim=H,N=self.N,K=self.K,D=self.D)
-        print self.vae
-        print 'number of parameters: ', sum(param.numel() for param in self.vae.parameters())
-        print params
+        print (self.vae)
+        print ('number of parameters: ', sum(param.numel() for param in self.vae.parameters()))
+        print (params)
         if torch.cuda.is_available():
             self.vae.cuda()
         #vae.load_state_dict(torch.load('vae_multi_gauss_new.pkl',lambda storage, loc: storage)) ]
@@ -183,7 +183,7 @@ class Mixture_Model:
             images = to_var(images.view(images.size(0), -1))
             out,mu, log_var,gibbs,g_softmax = self.vae(images,self.tau,hard=self.params['ST-estimator'])
             # Compute reconstruction loss and kl divergence
-            reconst_loss = F.binary_cross_entropy_with_logits(out, images,size_average=False)
+            reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduction='sum')
             kl_gauss = kl_gaussian(mu, log_var)
 
             kl_multi = kl_multinomial(gibbs)
@@ -191,7 +191,7 @@ class Mixture_Model:
             total_loss = reconst_loss  + kl_gauss + kl_multi
             if semi:
                 log_likelihood = torch.log(g_softmax).squeeze(1)
-                total_loss += 10*F.nll_loss(log_likelihood,labels,size_average=False)
+                total_loss += 10*F.nll_loss(log_likelihood,labels,reduction='sum')
             self.optimizer.zero_grad()
             total_loss.backward()
             self.optimizer.step()
@@ -216,9 +216,9 @@ class Mixture_Model:
             correct = 0
             for i, (images, labels) in enumerate(test_loader):
                 images = to_var(images.view(images.size(0), -1))
-		labels = to_var(labels)
+                labels = to_var(labels)
                 out,mu, log_var,gibbs,g_softmax = self.vae(images,self.tau,hard=True)
-                reconst_loss = F.binary_cross_entropy_with_logits(out, images,size_average=False)
+                reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduction='sum')
                 
                 kl_gauss =  kl_gaussian(mu, log_var)
                 kl_multi = kl_multinomial(gibbs)
@@ -273,7 +273,7 @@ class Mixture_Model:
         for epoch in range(1,self.num_epochs):
             self.print_flag = epoch % self.print_every == 0
             if self.print_flag:
-                print " ----- Epoch[{}/{}] ------".format(epoch, self.num_epochs)
+                print (" ----- Epoch[{}/{}] ------".format(epoch, self.num_epochs))
             if epoch in semi_epoch_list:
                data_loader = self.train_loader_balanced
                semi = True

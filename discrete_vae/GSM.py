@@ -16,14 +16,21 @@ class VAE(nn.Module):
     def __init__(self, image_size=784, N=6, K=6,M=20,tau=1.0, st_estimator=False,composed_decoder=True):
         super(VAE, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(image_size,N*K))
+            nn.Linear(image_size,300),
+            nn.ReLU(),
+            nn.Linear(300,N*K))
         
         self.composed_decoder = composed_decoder
         if not composed_decoder:
-            linear_combines = [nn.Linear(K,image_size) for _ in range(N)]
+            linear_combines = [nn.Sequential(nn.Linear(K, 300),
+                                             nn.ReLU(),
+                                             nn.Linear(300,image_size)) for _ in range(N)]
             self.decoder = ListModule(*linear_combines)
-        else:            
-            self.decoder = nn.Linear(N*K,image_size)
+        else:
+            self.decoder = nn.Sequential(
+                nn.Linear(N*K, 300),
+                nn.ReLU(),
+                nn.Linear(300,image_size))
 
         self.K = K
         self.N = N
@@ -34,7 +41,6 @@ class VAE(nn.Module):
                      
     def forward(self, x):        
         logits = self.encoder(x).view(-1,self.K)
-        #print logits.size()
         logits1 = logits.repeat(self.M,1)       
 
         if self.st:
@@ -98,7 +104,7 @@ class GSM_VAE:
                        composed_decoder = params['composed_decoder'])
         self.params = params        
         
-        print 'vae model: ',self.vae
+        print ('vae model: ',self.vae)
         
         if torch.cuda.is_available():
             self.vae.cuda()
@@ -165,7 +171,7 @@ def training_procedure(params):
     num_epochs = params['num_epochs']
     gsm_vae = GSM_VAE(params)
     best_state_dicts = None
-    print 'hyper parameters: ' ,params
+    print ('hyper parameters: ' ,params)
 
     train_results,valid_results,test_results = [],[],[]
     best_valid,best_test_nll = float('Inf'),float('Inf')

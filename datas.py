@@ -9,13 +9,15 @@ import scipy.io
 
 def load_data(params):
   # Load data
+  torch.manual_seed(params['random_seed'])
+  np.random.seed(params['random_seed'])
   if  params['dataset'] == 'mnist':
     loader = load_mnist
   elif params['dataset'] == 'omniglot':
     loader = load_omniglot
-  x_train, x_valid, x_test = loader(params['batch_size'],binarize=params['binarize'])
+  data_loaders = loader(params['batch_size'],binarize=params['binarize'],split_valid=params['split_valid'])
 
-  return x_train, x_valid, x_test
+  return data_loaders
 
 def get_balanced_dataset(ds,size = 100, num_classes = 10):
     """ ds: mnist data set
@@ -32,7 +34,7 @@ def get_balanced_dataset(ds,size = 100, num_classes = 10):
     tensor_la = torch.zeros(size).long()
     idx = 0
     balance = [0 for _ in range(num_classes)]
-    print "collecting a balanced sub-set of {} samples".format(size),
+    print ("collecting a balanced sub-set of {} samples".format(size),)
     for im,la in dl:
         if balance[la[0]] < size/num_classes:
             balance[la[0]] += 1
@@ -42,7 +44,7 @@ def get_balanced_dataset(ds,size = 100, num_classes = 10):
 
         if idx == size:
             break
-    print 
+    print ()
     return torch.utils.data.TensorDataset(tensor_im,tensor_la)
 
 def get_pytorch_mnist_datasets():
@@ -58,7 +60,7 @@ def get_pytorch_mnist_datasets():
     return train_dataset,test_dataset
 
 
-def load_mnist(bsize,binarize = True,dynamic_binarization = False):
+def load_mnist(bsize,binarize = True,split_valid = False,dynamic_binarization = False):
 
     train_dataset,test_dataset = get_pytorch_mnist_datasets()
     # Data loader
@@ -84,10 +86,11 @@ def load_mnist(bsize,binarize = True,dynamic_binarization = False):
         x_test = x_test.round()
     # validation set
     
-    x_val = x_train[50000:60000]
-    y_val = np.array(y_train[50000:60000], dtype=int)
-    x_train = x_train[0:50000]
-    y_train = np.array(y_train[0:50000], dtype=int)
+    if split_valid:
+        x_val = x_train[50000:60000]
+        y_val = np.array(y_train[50000:60000], dtype=int)
+        x_train = x_train[0:50000]
+        y_train = np.array(y_train[0:50000], dtype=int)
     
     # binarize
     if dynamic_binarization:
@@ -99,15 +102,18 @@ def load_mnist(bsize,binarize = True,dynamic_binarization = False):
     train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
     train_loader = data_utils.DataLoader(train, batch_size=bsize, shuffle=True)
 
-    validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-    val_loader = data_utils.DataLoader(validation, batch_size=bsize, shuffle=False)
-
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=bsize, shuffle=False)
+    if split_valid:
+        validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
+        val_loader = data_utils.DataLoader(validation, batch_size=bsize, shuffle=False)
+        data_loaders = train_loader, val_loader, test_loader
+    else:
+        data_loaders = train_loader, test_loader
 
-    return train_loader, val_loader, test_loader
+    return data_loaders
 
-def load_omniglot(bsize,binarize = True):
+def load_omniglot(bsize,binarize = True,split_valid = False):
   """Reads in Omniglot images.
 
   Args:
@@ -136,33 +142,43 @@ def load_omniglot(bsize,binarize = True):
 
   omni_raw = scipy.io.loadmat('./data/omniglot_07-19-2017.mat')
 
-  train_data = reshape_data(omni_raw['data'].T.astype('float32'))
-  test_data = reshape_data(omni_raw['testdata'].T.astype('float32'))
-
+  x_train = reshape_data(omni_raw['data'].T.astype('float32'))
+  x_test = reshape_data(omni_raw['testdata'].T.astype('float32'))
+  y_test = np.zeros( (x_test.shape[0], 1) )
   # Binarize the data
   if binarize:
-    train_data = train_data.round()
-    test_data = test_data.round()
+    x_train = x_train.round()
+    x_test = x_test.round()
+
 
   shuffle_seed = 123
-  permutation = np.random.RandomState(seed=shuffle_seed).permutation(train_data.shape[0])
-  train_data = train_data[permutation]
+  permutation = np.random.RandomState(seed=shuffle_seed).permutation(x_train.shape[0])
+  x_train = x_train[permutation]
+  
+  if split_valid:
+    x_train = x_train[:-n_validation]
+    x_val = x_train[-n_validation:]
+    
+    y_train = np.zeros( (x_train.shape[0], 1) )
+    y_val = np.zeros( (x_val.shape[0], 1) )
+  
+  else:
+    x_train = x_train[:-n_validation]
+    y_train = np.zeros( (x_train.shape[0], 1) )
+    y_test = np.zeros( (x_test.shape[0], 1) )
 
-  x_train = train_data[:-n_validation]
-  x_val = train_data[-n_validation:]
-  x_test = test_data
-  # idle y's
-  y_train = np.zeros( (x_train.shape[0], 1) )
-  y_val = np.zeros( (x_val.shape[0], 1) )
-  y_test = np.zeros( (x_test.shape[0], 1) )
 
   # pytorch data loader
   train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
   train_loader = data_utils.DataLoader(train, batch_size=bsize, shuffle=True)
-
-  validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-  val_loader = data_utils.DataLoader(validation, batch_size=bsize, shuffle=False)
-
   test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
   test_loader = data_utils.DataLoader(test, batch_size=bsize, shuffle=False)
-  return train_loader, val_loader, test_loader
+  if split_valid:
+    validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
+    val_loader = data_utils.DataLoader(validation, batch_size=bsize, shuffle=False)
+    data_loaders = train_loader, val_loader, test_loader
+  else:
+
+    data_loaders = train_loader,test_loader
+
+  return data_loaders

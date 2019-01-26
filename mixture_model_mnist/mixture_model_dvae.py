@@ -162,9 +162,9 @@ class Mixture_Model:
         H = 400
         gibbs = Gibbs_Encoder(h_dim=H,N=self.N,K=self.K,D=self.D)
         self.vae = VAE(gibbs,h_dim=H,N=self.N,K=self.K,D=self.D)
-        print self.vae
-        print 'number of parameters: ', sum(param.numel() for param in self.vae.parameters())
-        print params
+        print (self.vae)
+        print ('number of parameters: ', sum(param.numel() for param in self.vae.parameters()))
+        print (params)
         if torch.cuda.is_available():
             self.vae.cuda()
         #vae.load_state_dict(torch.load('vae_multi_gauss_new.pkl',lambda storage, loc: storage)) ]
@@ -177,7 +177,7 @@ class Mixture_Model:
             
             images = to_var(images.view(images.size(0), -1))
             out,mu_log_var,z_hard,z_soft,z_g,phi_x = self.vae(images)
-            reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduce=False)
+            reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduction='none')
             gradients_signs = self.compute_encoder_gradients(z_hard,z_soft,z_g,images,semi,labels,epsilon=self.eps)
             encoder_loss = torch.sum(to_var(gradients_signs)*z_soft)
             
@@ -218,13 +218,13 @@ class Mixture_Model:
                 clone2 = a_clone.clone()
                 clone2[:,n,k]=1
                 out = self.vae.sample(to_var(clone2),gaussian)
-                total_loss_batchX784 = F.binary_cross_entropy_with_logits(out,images,reduce = False)
+                total_loss_batchX784 = F.binary_cross_entropy_with_logits(out,images,reduction = 'none')
                 
                 losses[:,l] = total_loss_batchX784.sum(dim = 1)
                 l +=1
         hard_copy = hard_copy.view(-1,K)
         losses = epsilon*losses.view(-1,K)
-        #print soft_copy,losses
+
         soft_copy = soft_copy - losses
         shape = soft_copy.size()
         _, argmax = soft_copy.max(-1)
@@ -245,7 +245,7 @@ class Mixture_Model:
                 images = to_var(images.view(images.size(0), -1))
                 labels = to_var(labels)
                 out,mu_log_var,z_hard,z_soft,z_g,gibbs = self.vae(images)
-                reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduce = False)
+                reconst_loss = F.binary_cross_entropy_with_logits(out, images,reduction = 'none')
                 kl_gauss =  kl_gaussian(*mu_log_var)
 
                 reconst_loss = reconst_loss.sum()
@@ -300,7 +300,7 @@ class Mixture_Model:
         for epoch in range(1,self.num_epochs):
             self.print_flag = epoch % self.print_every == 0
             if self.print_flag:
-                print " ----- Epoch[{}/{}] ------".format(epoch, self.num_epochs)
+                print( " ----- Epoch[{}/{}] ------".format(epoch, self.num_epochs))
             if epoch in semi_epoch_list:
                 data_loader = self.train_loader_balanced
                 semi = True
@@ -313,13 +313,13 @@ class Mixture_Model:
                     first_after_semi = False
                 if self.print_flag and self.params['save_images']:
                     self.vae.eval()
-                    reconst_images= F.sigmoid(self.vae.sample(self.fixed_z_d,self.fixed_z_c))
+                    reconst_images= torch.sigmoid(self.vae.sample(self.fixed_z_d,self.fixed_z_c))
                     reconst_images = reconst_images.view(reconst_images.size(0), 1, 28, 28)
                     torchvision.utils.save_image(reconst_images.cpu(),
                                                  path_to_save+'generated_images_dvae_%d.png' %(epoch),nrow=self.K)
                     """
                     reconst_images,_,_,_,_,_= self.vae(fixed_x)
-                    reconst_images = F.sigmoid(reconst_images)
+                    reconst_images = torch.sigmoid(reconst_images)
                     reconst_images = reconst_images.view(reconst_images.size(0), 1, 28, 28)
                     torchvision.utils.save_image(reconst_images.cpu(),
                                                  './results/images/reconstructed_images_dvae_%d.png' %(epoch),nrow=self.K)

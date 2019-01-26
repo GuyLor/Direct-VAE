@@ -34,15 +34,19 @@ def timing(f):
         time1 = time.time()
         ret = f(*args)
         time2 = time.time()
-        print '%s function took %0.3f ms' % (f.func_name, (time2-time1)*1000.0)
+        print ('%s function took %0.3f ms' % (f.func_name, (time2-time1)*1000.0))
         return ret
     return wrap
     
 def print_results(epoch_results,epoch,num_epochs):
-    print " ------ Epoch[{}/{}] ------ ".format(epoch+1,num_epochs)
-    print ("Train NLL: {:.2f}".format(epoch_results[0]))
-    print ("Valid NLL: {:.2f}".format(epoch_results[1]))
-    print ("Test  NLL: {:.2f}".format(epoch_results[2]))
+    print (" ------ Epoch[{}/{}] ------ ".format(epoch+1,num_epochs))
+    if len(epoch_results)==3:
+        print ("Train NLL: {:.2f}".format(epoch_results[0]))
+        print ("Valid NLL: {:.2f}".format(epoch_results[1]))
+        print ("Test  NLL: {:.2f}".format(epoch_results[2]))
+    else:
+        print ("Train NLL: {:.2f}".format(epoch_results[0]))
+        print ("Test  NLL: {:.2f}".format(epoch_results[1]))
     
 def kl_multinomial(logits_z):
     M = logits_z.size(-1)

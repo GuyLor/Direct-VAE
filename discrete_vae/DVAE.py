@@ -13,8 +13,9 @@ class Encoder(nn.Module):
     def __init__(self, image_size=784, N=6,K=6,M=20):
         super(Encoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(image_size,N*K))
-        
+            nn.Linear(image_size,300),
+            nn.ReLU(),
+            nn.Linear(300,N*K))
         self.N = N
         self.K = K
         self.M = M     
@@ -46,18 +47,24 @@ class Decoder(nn.Module):
     def __init__(self, image_size=784,N=6,K=6,composed_decoder = True):
         super(Decoder, self).__init__()
         self.composed_decoder = composed_decoder
+        
         if not composed_decoder:
-            linear_combines = [nn.Linear(K,image_size) for _ in range(N)]
+            linear_combines = [nn.Sequential(nn.Linear(K, 300),
+                                             nn.ReLU(),
+                                             nn.Linear(300,image_size)) for _ in range(N)]                
             self.decoder = ListModule(*linear_combines)
         else:            
-            self.decoder = nn.Linear(N*K,image_size)
+            self.decoder = nn.Sequential(
+                nn.Linear(N*K, 300),
+                nn.ReLU(),
+                nn.Linear(300,image_size))
         
         self.N = N
         self.K = K
 
         
     def forward(self, y):
-	#y = 2. * y - 1
+
         if not self.composed_decoder:
             y=y.view(-1,self.N,self.K)
             bs = y.size(0)
@@ -83,8 +90,8 @@ class Direct_VAE:
 
         self.params = params
 
-        print 'encoder: ',self.encoder
-        print 'decoder: ',self.decoder
+        print ('encoder: ',self.encoder)
+        print ('decoder: ',self.decoder)
 
         if torch.cuda.is_available():
             self.encoder.cuda()
@@ -93,7 +100,7 @@ class Direct_VAE:
         lr = params['learning_rate']
         self.optimizer_e = torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.optimizer_d = torch.optim.Adam(self.decoder.parameters(), lr=lr)
-        self.bce_loss = nn.BCEWithLogitsLoss(size_average=False, reduce=False)
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction='none')
         self.training_iter = 0
 
 
@@ -128,7 +135,7 @@ class Direct_VAE:
    
             bce_sum += (decoder_loss+kl).detach()/bs
             
-            if self.training_iter % 1000 == 0:
+            if self.training_iter % 500 == 0:
                 a = eps_0*math.exp(-ANNEAL_RATE*self.training_iter)
                 self.eps = np.maximum(a,min_eps).item()
             self.training_iter += 1
@@ -139,9 +146,9 @@ class Direct_VAE:
     def evaluate(self,test_loader):
         self.encoder.eval()
         self.decoder.eval()
-        self.encoder.M = 100
-        self.decoder.M = 100
-        self.M = 100
+        #self.encoder.M = 100
+        #self.decoder.M = 100
+        #self.M = 100
         bce_sum =0
         kl_div = 0
         with torch.no_grad():
@@ -171,8 +178,9 @@ class Direct_VAE:
             soft_copy = phi_x_g.data
             hard_copy = z_hard.data.view(-1,N,K)
             self.decoder.eval()
-            losses = to_var(torch.zeros(hard_copy.size(0), K*N))
-            l = 0
+
+            new_batch = []
+            gt_batch = []
             for n in range(N):
                 a_clone = hard_copy.clone()
                 idx = to_var(n*torch.ones(hard_copy.size(0),1,hard_copy.size(2)).long())
@@ -181,12 +189,14 @@ class Direct_VAE:
                 for k in range(K):
                     clone2 = a_clone.clone()
                     clone2[:,n,k]=1
-                    out = self.decoder(to_var(clone2).view(-1,K))
-                    total_loss_batchX784 = self.bce_loss(out,ground_truth)
-                    
-                    losses[:,l] = total_loss_batchX784.sum(dim = 1)
-                    l +=1
-
+                    new_batch.append(clone2)
+                    gt_batch.append(ground_truth)
+        
+            new_batch = torch.cat(new_batch,1)
+            gt_batch = torch.cat(gt_batch,1).view(-1,ground_truth.size(-1))
+            
+            out = self.decoder(to_var(new_batch))
+            losses = self.bce_loss(out,gt_batch).sum(dim = 1) #ground_truth.repeat(K*N,1)
             hard_copy = hard_copy.view(-1,K)
             losses = epsilon*losses.view(-1,K).data
             soft_copy = soft_copy - losses
@@ -212,7 +222,7 @@ def training_procedure(params):
     direct_vae = Direct_VAE(params)
     
     best_state_dicts = None
-    print 'hyper parameters: ' ,params
+    print ('hyper parameters: ' ,params)
 
     train_results,valid_results,test_results = [],[],[]
     best_valid,best_test_nll = float('Inf'),float('Inf')

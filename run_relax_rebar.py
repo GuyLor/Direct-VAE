@@ -13,19 +13,17 @@ def encoder(x):
     if len(gs(x)) > 2:
         p = np.prod(gs(x)[1:])
         x = tf.reshape(x, [-1, p])
-    #h1 = tf.layers.dense(2. * x - 1., 200, tf.nn.relu, name="encoder_1")
-    #h2 = tf.layers.dense(h1, 200, tf.nn.relu, name="encoder_2")
-    log_alpha = tf.layers.dense(x, 20, name="encoder_out")
+    h1 = tf.layers.dense(x, 300, tf.nn.relu, name="encoder_1",use_bias=True)
+    log_alpha = tf.layers.dense(h1, 15, name="encoder_out")
     return log_alpha
 
 def decoder(b):
-    #h1 = tf.layers.dense(2. * b - 1., 200, tf.nn.relu, name="decoder_1")
-    #h2 = tf.layers.dense(h1, 200, tf.nn.relu, name="decoder_2")
-    log_alpha = tf.layers.dense(b, 784, name="decoder_out")
+    h1 = tf.layers.dense(b, 300, tf.nn.relu, name="decoder_1",use_bias=True)
+    log_alpha = tf.layers.dense(h1, 784, name="decoder_out")
     return log_alpha
 
 def Q_func(z):
-    h1 = tf.layers.dense(2. * z - 1., 50, tf.nn.relu, name="q_1", use_bias=True)
+    h1 = tf.layers.dense(z, 50, tf.nn.relu, name="q_1", use_bias=True)
     out = tf.layers.dense(h1, 1, name="q_out", use_bias=True)
     scale = tf.get_variable(
         "q_scale", shape=[1], dtype=tf.float32,
@@ -40,10 +38,11 @@ if __name__ == "__main__":
     BATCH_SIZE = 100
     params = {'binarize':True,
               'dataset':'mnist',
-              'random_seed':660,
+              'random_seed':666,
+              'split_valid':False,
               'batch_size':BATCH_SIZE}
 
-    train_loader,valid_loader,test_loader = datas.load_data(params)
+    train_loader,test_loader = datas.load_data(params)
 
     reinforce = False
     #relaxed = True if reb_rel == 'relax' else False
@@ -130,7 +129,7 @@ if __name__ == "__main__":
             loss, _ = sess.run([gen_loss, train_op], feed_dict={x: batch_xs})
      """
     losses=[]
-    NUM_EPOCHS = 600
+    NUM_EPOCHS = 300
     for epoch in range(1,NUM_EPOCHS+1):
         train_loss = 0
         test_loss = 0
