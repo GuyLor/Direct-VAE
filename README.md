@@ -1,7 +1,7 @@
 # direct_vae
 
 
-discrete_vae: contains discrete vae model  with categorial (1 x k)  latent variables <br />
+discrete_vae: discrete vae model with categorial (1 x k) latent variables <br />
 mixture_model_mnist: contains mixture of gaussian and discrete vae (unsupervised or semi-supervised) [mnist] <br />
 
 The above are optimized with direct optimization and with gumbel-softmax. <br />
