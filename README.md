@@ -1,20 +1,14 @@
 # direct_vae
 
 
+discrete_vae: contains discrete vae model  with categorial (1 x k)  latent variables <br />
+mixture_model_mnist: contains mixture of gaussian and discrete vae (unsupervised or semi-supervised) [mnist] <br />
 
-discrete_vae: contains discrete vae model [mnist, omniglot datasets]
+The above are optimized with direct optimization and with gumbel-softmax. <br />
 
-mixture_model_mnist: contains mixture of gaussian and discrete vae (unsupervised or semi-supervised) [mnist]
+REBAR, RELAX, ARM:  only for binary latent variables, based on https://github.com/duvenaud/relax/blob/master/mnist_vae.py and https://github.com/mingzhang-yin/ARM-gradient
 
-The above are optimized with direct optimization and with gumbel-softmax.
+To run the above, use the scripts run_direct_gsm.py, run_mixture.py, run_relax_rebar.py, run_ARM.py respectively. <br />
 
-REBAR_RELAX: this implementation is only with binary latent variables, based on https://github.com/duvenaud/relax/blob/master/mnist_vae.py
+In addition, an impementation of structured vae is avilable only with direct_vae, check out the paper for more details. run_structured_dvae.py 
 
-To run the above, use the scripts run_direct_gsm.py, run_mixture.py, run_relax_rebar.py respectively.
-
-Dependencies:
-Python 2.7
-Pytorch 0.4.0
-(REBAR_RELAX: Tensorflow)
-
-The datasets are downloaded automatically if they don't exist

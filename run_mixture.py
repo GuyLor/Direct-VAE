@@ -1,6 +1,7 @@
 from mixture_model_mnist import mixture_model_dvae
 from mixture_model_mnist import mixture_model_gsm
 
+
 params = {'num_epochs': 400,
             'supervised_epochs':1200, # 0 for unsupervised
             'num_labeled_data':200,
@@ -18,6 +19,7 @@ params = {'num_epochs': 400,
             'random_seed':666,
             'save_images':True,
             'print_every':20} # put float('Inf') for no printing
+
 
 #mixture_model = mixture_model_gsm.Mixture_Model(params)
 mixture_model = mixture_model_dvae.Mixture_Model(params)
