@@ -31,9 +31,9 @@ class Gibbs_Encoder(nn.Module):
         self.N,self.K= N,K
         self.D = D
         self.encode_x_to_gibbs = nn.Sequential(
-            nn.Linear(h_dim/2, h_dim/4),
+            nn.Linear(h_dim//2, h_dim//4),
             nn.LeakyReLU(0.2),
-            nn.Linear(h_dim/4, N*K))
+            nn.Linear(h_dim//4, N*K))
 
     def forward(self, x):
         N,K,D = self.N, self.K, self.D
@@ -77,18 +77,18 @@ class VAE(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(image_size,int(h_dim)),
             nn.LeakyReLU(0.2),
-            nn.Linear(int(h_dim), h_dim/2))
+            nn.Linear(int(h_dim), h_dim//2))
 
         self.encode_x_to_gibbs = gibbs
         
         self.encode_x_to_gauss = nn.Sequential(
-            nn.Linear(h_dim/2,h_dim/4 * K))
+            nn.Linear(h_dim//2,h_dim//4 * K))
         
         self.encode_K_gauss = nn.Sequential(
-            nn.Linear(h_dim/4 ,h_dim/6),
+            nn.Linear(h_dim//4 ,h_dim//6),
             nn.LeakyReLU(0.5),
             nn.Dropout(0.5),
-            nn.Linear(h_dim/6, 2*gaussian_dim)) # 1 for mu 1 for log_var
+            nn.Linear(h_dim//6, 2*gaussian_dim)) # 1 for mu 1 for log_var
             
         self.decoder = nn.Sequential(
             nn.Linear(gaussian_dim*K, h_dim),
