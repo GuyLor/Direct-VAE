@@ -161,7 +161,7 @@ class Mixture_Model:
                                                                 shuffle=True)
         H = 400
         gibbs = Gibbs_Encoder(h_dim=H,N=self.N,K=self.K,D=self.D)
-        self.vae = VAE(gibbs,h_dim=H,N=self.N,K=self.K,D=self.D)
+        self.vae = VAE(gibbs,h_dim=H,gaussian_dim=self.gaussian_dim,N=self.N,K=self.K,D=self.D)
         print (self.vae)
         print ('number of parameters: ', sum(param.numel() for param in self.vae.parameters()))
         print (params)
