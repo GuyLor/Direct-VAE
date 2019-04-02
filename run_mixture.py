@@ -3,8 +3,9 @@ from mixture_model_mnist import mixture_model_gsm
 
 
 params = {'num_epochs': 400,
-            'supervised_epochs':1200, # 0 for unsupervised
+            'supervised_epochs':400, # 0 for unsupervised
             'num_labeled_data':200,
+            'dataset': 'fashion-mnist',
             'batch_size': 100,
             'gaussian_dimension':20,
             'learning_rate': 0.0008,

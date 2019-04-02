@@ -6,12 +6,12 @@ params = {'num_epochs': 300,
             'batch_size': 100,
             'learning_rate': 0.001,
             'gumbels' : 1,
-            'N_K': (1,40),
+            'N_K': (15,2),
             'eps_0':1.0,
             'anneal_rate':1e-5,
             'min_eps':0.1,
-            'random_seed':777,
-            'dataset':'mnist', # 'mnist' or 'omniglot'
+            'random_seed':775,
+            'dataset':'omniglot', # 'mnist' or 'fashion-mnist' or 'omniglot'
             'split_valid':True,
             'binarize':True,
             'ST-estimator':False, # relevant only for GSM

@@ -5,17 +5,18 @@ import torch.nn.functional as F
 import torch.utils.data as data_utils
 import numpy as np
 import os
-import scipy.io
+#import scipy.io
+from mat4py import loadmat
 
 def load_data(params):
   # Load data
   torch.manual_seed(params['random_seed'])
   np.random.seed(params['random_seed'])
-  if  params['dataset'] == 'mnist':
+  if  params['dataset'] == 'mnist' or params['dataset'] == 'fashion-mnist':
     loader = load_mnist
   elif params['dataset'] == 'omniglot':
     loader = load_omniglot
-  data_loaders = loader(params['batch_size'],binarize=params['binarize'],split_valid=params['split_valid'])
+  data_loaders = loader(params['batch_size'],binarize=params['binarize'],split_valid=params['split_valid'],params=params)
 
   return data_loaders
 
@@ -47,22 +48,23 @@ def get_balanced_dataset(ds,size = 100, num_classes = 10):
     print ()
     return torch.utils.data.TensorDataset(tensor_im,tensor_la)
 
-def get_pytorch_mnist_datasets():
+def get_pytorch_mnist_datasets(fashion = False):
     transform = transforms.ToTensor()
-    train_dataset = datasets.MNIST(root='./data',
-                                   train=True,
-                                   transform=transform,
-                                   download=True)
-    test_dataset = datasets.MNIST(root='./data',
-                                  train=False,
-                                  transform=transform,
-                                  download=True)
+    ds = datasets.FashionMNIST if fashion else datasets.MNIST
+    train_dataset = ds(root='./data',
+                           train=True,
+                           transform=transform,
+                           download=True)
+    test_dataset = ds(root='./data',
+                          train=False,
+                          transform=transform,
+                          download=True)
     return train_dataset,test_dataset
 
 
-def load_mnist(bsize,binarize = True,split_valid = False,dynamic_binarization = False):
-
-    train_dataset,test_dataset = get_pytorch_mnist_datasets()
+def load_mnist(bsize,binarize = True,split_valid = False,dynamic_binarization = False,params=None):
+    fashion = True if params['dataset']=='fashion-mnist' else False
+    train_dataset,test_dataset = get_pytorch_mnist_datasets(fashion)
     # Data loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                               batch_size=bsize,
@@ -113,7 +115,7 @@ def load_mnist(bsize,binarize = True,split_valid = False,dynamic_binarization = 
 
     return data_loaders
 
-def load_omniglot(bsize,binarize = True,split_valid = False):
+def load_omniglot(bsize,binarize = True,split_valid = False,params=None):
   """Reads in Omniglot images.
 
   Args:
@@ -140,10 +142,10 @@ def load_omniglot(bsize,binarize = True,split_valid = False):
   def reshape_data(data):
     return data.reshape((-1, 28, 28)).reshape((-1, 28*28), order='fortran')
 
-  omni_raw = scipy.io.loadmat('./data/omniglot_07-19-2017.mat')
+  omni_raw = loadmat('./data/omniglot_07-19-2017.mat')
 
-  x_train = reshape_data(omni_raw['data'].T.astype('float32'))
-  x_test = reshape_data(omni_raw['testdata'].T.astype('float32'))
+  x_train = reshape_data(np.array(omni_raw['data']).T.astype('float32'))
+  x_test = reshape_data(np.array(omni_raw['testdata']).T.astype('float32'))
   y_test = np.zeros( (x_test.shape[0], 1) )
   # Binarize the data
   if binarize:

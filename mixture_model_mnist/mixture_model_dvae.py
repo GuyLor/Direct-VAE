@@ -150,11 +150,11 @@ class Mixture_Model:
         self.epoch_semi_sup = params['supervised_epochs']
         self.num_epochs += self.epoch_semi_sup
         batch_size = params['batch_size']
-
-        params['dataset'] = 'mnist'
+        
         self.train_loader,self.valid_loader,self.test_loader = datas.load_data(params)
         if self.epoch_semi_sup>0:
-            train_ds,_ = datas.get_pytorch_mnist_datasets()
+            fashion = True if params['dataset']=='fashion-mnist' else False
+            train_ds,_ = datas.get_pytorch_mnist_datasets(fashion)
             balanced_ds = datas.get_balanced_dataset(train_ds,params['num_labeled_data'])
             self.train_loader_balanced = torch.utils.data.DataLoader(dataset=balanced_ds,
                                                                 batch_size=batch_size,

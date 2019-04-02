@@ -8,7 +8,7 @@ import math
 import numpy as np
 import os
 import time
-
+#####################################
 is_cuda = torch.cuda.is_available()
 
 def denorm(x): #from range [-1,1] to [0,1]

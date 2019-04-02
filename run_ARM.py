@@ -14,12 +14,15 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 params = {'binarize':True,
-          'dataset':'mnist',
-          'random_seed':777,
-          'split_valid':False,
+          'dataset':'omniglot',
+          'random_seed':775,
+          'split_valid':True,
           'batch_size':100}
 batch_size = params['batch_size']
-train_loader,test_loader = datas.load_data(params)
+if params['split_valid']:
+    train_loader,valid_loader,test_loader = datas.load_data(params)
+else:
+    train_loader,test_loader = datas.load_data(params)
 
 slim=tf.contrib.slim
 Bernoulli = tf.contrib.distributions.Bernoulli
