@@ -81,7 +81,7 @@ class VAE(nn.Module):
             nn.LeakyReLU(0.5),
             nn.Dropout(0.5),
             nn.Linear(h_dim/6, 2*gaussian_dim)) # 1 for mu 1 for log_var
-	"""
+        """
         self.encode_x_to_gauss = nn.Sequential(
             nn.Linear(h_dim/2,gaussian_dim * K))
             
@@ -90,7 +90,7 @@ class VAE(nn.Module):
             nn.LeakyReLU(0.5),
             nn.Dropout(0.5),
             nn.Linear(int(1.5*gaussian_dim), 2*gaussian_dim)) # 1 for mu 1 for log_var
-	"""
+        """
         self.decoder = nn.Sequential(
             nn.Linear(gaussian_dim*K, h_dim),
             nn.ReLU(),
@@ -177,9 +177,8 @@ class Mixture_Model:
     
     def train(self,data_loader,semi):
         bce,kl,nll =0,0,0
-        for i, (images, labels) in enumerate(data_loader):
-        
-	    labels = to_var(labels)        
+        for i, (images, labels) in enumerate(data_loader):        
+            labels = to_var(labels)        
             images = to_var(images.view(images.size(0), -1))
             out,mu, log_var,gibbs,g_softmax = self.vae(images,self.tau,hard=self.params['ST-estimator'])
             # Compute reconstruction loss and kl divergence
