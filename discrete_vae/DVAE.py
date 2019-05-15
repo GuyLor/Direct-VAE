@@ -87,7 +87,7 @@ class Direct_VAE:
         self.decoder = Decoder(N=self.N,K=self.K, composed_decoder=params['composed_decoder'])
         self.eps = params['eps_0']
         self.annealing_rate = params['anneal_rate']
-
+        self.eye = torch.eye(self.K)
         self.params = params
 
         print ('encoder: ',self.encoder)
@@ -179,8 +179,10 @@ class Direct_VAE:
             hard_copy = z_hard.data.view(-1,N,K)
             self.decoder.eval()
 
+   
             new_batch = []
             gt_batch = []
+
             for n in range(N):
                 a_clone = hard_copy.clone()
                 idx = to_var(n*torch.ones(hard_copy.size(0),1,hard_copy.size(2)).long())

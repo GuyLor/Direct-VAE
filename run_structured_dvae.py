@@ -19,8 +19,8 @@ params = {'num_epochs': 300,
             'eps_0':1.0,
             'anneal_rate':1e-5,
             'min_eps':0.1,
-            'structure': False,
-            'dataset':'mnist',
+            'structure': True,
+            'dataset':'omniglot',
             'split_valid':False,
             'binarize':True,
             'random_seed':777,
@@ -83,13 +83,14 @@ def argmax_cplex(phi_list):
     
     k_batch = []
     for phi_i,phi_ij in phi_list:
-
+        
         phi = phi_i[:,1] - phi_i[:,0]
         k,_ = get_argmax_and_max(phi.detach().cpu().numpy().astype(float),phi_ij.reshape(-1).detach().cpu().numpy().astype(float))
         k_batch.append(k)
 
+
     k =to_var(torch.tensor(k_batch,dtype=torch.long))
-    #print (k.size())
+    
     return k
 
 
@@ -117,7 +118,7 @@ class Encoder(nn.Module):
         phi_i, phi_i_j = phi_x.split([self.N*self.K,self.comb_num],dim=1)
         
         z,phi_x_g = self.gumbel_perturbation(phi_i,phi_i_j,structure)
-        return z,phi_x_g,phi_x 
+        return z,phi_x_g,phi_x
 
     def sample_gumbel(self,shape, eps=1e-20):
         #Sample from Gumbel(0, 1)
@@ -127,6 +128,7 @@ class Encoder(nn.Module):
     def gumbel_perturbation(self,phi_x,phi_i_j,structure = True, eps=1e-10):
         M,K,N = self.M,self.K,self.N
         phi_x=phi_x.contiguous().view(-1,K)
+        
         phi_x = phi_x.repeat(M,1)
         shape = phi_x.size()
         gumbel_noise = to_var(self.sample_gumbel(shape, eps=eps))
@@ -142,6 +144,7 @@ class Encoder(nn.Module):
         else:
             z = torch.FloatTensor(*shape).zero_().scatter_(-1, k.view(-1, 1), 1.0)
         z_phi_gamma = to_var(z)
+
         return z_phi_gamma,(batch_phi,k) #phi_x_gamma
         
 
@@ -221,8 +224,8 @@ class Direct_VAE:
 
             self.optimizer_d.step()
             self.optimizer_e.step()
-            
-            bce_sum += (decoder_loss+kl)/bs
+            bce = (decoder_loss+kl)/bs
+            bce_sum += bce.detach().item()
             if self.training_iter % 500 == 0:
                 a = eps_0*math.exp(-ANNEAL_RATE*self.training_iter)
                 if a > min_eps:
@@ -234,7 +237,7 @@ class Direct_VAE:
             end = time.time()
             training_time.append(end-start)
 
-        nll_bce = (bce_sum.item())/len(train_loader)
+        nll_bce = bce_sum/len(train_loader)
         avg_time = np.mean(training_time)
         to_return =nll_bce
         
@@ -263,8 +266,8 @@ class Direct_VAE:
                 #print self.bce_loss(out,ground_truth).sum().item()
                 decoder_loss  = self.bce_loss(out,ground_truth).view(self.M,bs,-1).mean(0).sum()
                 kl = kl_multinomial(phi_x[:,:self.N*self.K].contiguous().view(-1,self.K))
-
-                bce_sum += (decoder_loss+kl)/images.size(0)
+                bce = (decoder_loss+kl)/images.size(0)
+                bce_sum += bce.detach().item()
     
 
         self.encoder.train()
@@ -272,7 +275,7 @@ class Direct_VAE:
         self.encoder.M = params['gumbels']
         self.decoder.M = params['gumbels']
         self.M = params['gumbels']
-        nll_bce = bce_sum.item()/len(test_loader)
+        nll_bce = bce_sum/len(test_loader)
         return nll_bce
     def compute_encoder_gradients(self,z_hard,phi_x_g,ground_truth,epsilon=1.0):
         N = self.N
@@ -316,7 +319,7 @@ class Direct_VAE:
             k = argmax_cplex(batch_phi)#.view(-1,K)
         z_direct = k.tolist()
         z_opt =  z_opt.tolist()
-
+        
         if is_cuda:
             change = torch.cuda.FloatTensor(*shape).zero_().scatter_(-1, k.view(-1, 1),1.0)
         else:
@@ -327,6 +330,7 @@ class Direct_VAE:
         ij_sign_batch = []
         if self.structure:
             for zopt, zdirect in zip(z_opt,z_direct):
+                
                 zij_opt = torch.tensor([l*r for l,r in combinations(zopt,2)])
                 zij_direct = torch.tensor([l*r for l,r in combinations(zdirect,2)])
                 phi_ij_sign_grad =  zij_opt - zij_direct
@@ -338,6 +342,7 @@ class Direct_VAE:
         else:
             phi_ij = torch.cat(phi_ij).view(grad_phi_i.size(0),-1)
             ij_sign_batch = torch.zeros_like(phi_ij)
+        
         grad_phi_ij = ij_sign_batch*phi_ij
         gradients = torch.cat((grad_phi_i, grad_phi_ij),-1)
         self.decoder.train()

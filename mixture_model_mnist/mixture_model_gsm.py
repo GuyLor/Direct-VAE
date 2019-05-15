@@ -165,7 +165,7 @@ class Mixture_Model:
                                                                      shuffle=True)
         H = 400
         self.tau = params['eps_0']
-        self.vae = VAE(h_dim=H,N=self.N,K=self.K,D=self.D)
+        self.vae = VAE(h_dim=H,gaussian_dim=self.gaussian_dim,N=self.N,K=self.K,D=self.D)
         print (self.vae)
         print ('number of parameters: ', sum(param.numel() for param in self.vae.parameters()))
         print (params)
@@ -281,10 +281,10 @@ class Mixture_Model:
                 data_loader = self.train_loader
                 semi = False
                 if first_after_semi:
-                    self.tau= params['eps_0']
-                    #params['ST-estimator'] = True
+                    self.tau= self.params['eps_0']
+                    #self.params['ST-estimator'] = True
                     first_after_semi = False
-                if self.print_flag and params['save_images']:
+                if self.print_flag and self.params['save_images']:
                     with torch.no_grad():
                         self.vae.eval()
                         reconst_images= F.sigmoid(self.vae.sample(self.fixed_z_d,self.fixed_z_c))
