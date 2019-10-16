@@ -27,13 +27,13 @@ params = {'num_epochs': 300,
             'N_K': (args.N,args.K),
             'eps_0':1.0,
             'anneal_rate':1e-5,
-            'unbiased':True,
+            'method':args.method,
             'min_eps':0.1,
             'random_seed':args.seed,
             'dataset':args.ds, # 'mnist' or 'fashion-mnist' or 'omniglot'
             'split_valid':True,
             'binarize':True,
-            'ST-estimator':False, # relevant only for GSM
+            'ST-estimator':True, # relevant only for GSM
             'save_images':False,
             'print_result':True}
 
@@ -49,15 +49,13 @@ returned results:
  best_state_dicts: pytorch models,
  params
  """
-
-if args.method == 'direct':
-    params['unbiased'] = False
-    dvae_results = DVAE.training_procedure(params)
-if args.method == 'gsm':
-    params['unbiased'] = False
-    gsm_results = GSM.training_procedure(params)
-if args.method == 'unbiased':
-    params['unbiased'] = True
-    unbiased_results = unbiased.training_procedure(params)
+def run(params):
+    if params['method'] == 'direct':
+        results = DVAE.training_procedure(params)
+    if params['method'] == 'gsm':
+        results = GSM.training_procedure(params)
+    if params['method'] == 'unbiased':
+        results = unbiased.training_procedure(params)
+    return results
 
 
