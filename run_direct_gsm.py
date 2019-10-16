@@ -12,6 +12,10 @@ parser.add_argument('--ds', type=str, default='mnist',
                     help='mnist, fashion-mnist or omniglot')
 parser.add_argument('--seed', type=int, default=775,
                     help='random seed')
+parser.add_argument('--N', type=int, default=1,
+                    help='dimension size of the latent space z (number of rows)')
+parser.add_argument('--K', type=int, default=10,
+                    help='dimension size of the latent space z (number of columns)')
 
 args = parser.parse_args()
 
@@ -20,7 +24,7 @@ params = {'num_epochs': 300,
             'batch_size': 100,
             'learning_rate': 0.001,
             'gumbels' : 1,
-            'N_K': (1,10),
+            'N_K': (args.N,args.K),
             'eps_0':1.0,
             'anneal_rate':1e-5,
             'unbiased':True,
