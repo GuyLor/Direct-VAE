@@ -63,8 +63,11 @@ if __name__ == "__main__":
     x_binary = tf.to_float(x > .5)
     log_alpha = encoder(x_binary)
     log_alpha_v = tf.reshape(log_alpha, [-1])
+    global evals
     evals = 0
     def loss(b):
+        # HACKY BS
+        global evals
         log_q_b_given_x = bernoulli_loglikelihood(b, log_alpha)
         log_q_b_given_x = tf.reduce_mean(tf.reduce_sum(log_q_b_given_x, axis=1))
 
@@ -75,8 +78,8 @@ if __name__ == "__main__":
             log_alpha_x_batch = decoder(b)
         log_p_x_given_b = bernoulli_loglikelihood(x_binary, log_alpha_x_batch)
         log_p_x_given_b = tf.reduce_mean(tf.reduce_sum(log_p_x_given_b, axis=1))
-        # HACKY BS
-        global evals
+        
+        
         if evals == 0:
             # if first eval make image summary
             a = tf.exp(log_alpha_x_batch)
