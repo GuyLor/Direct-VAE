@@ -86,7 +86,7 @@ class REBAROptimizer(object):
         tf.summary.histogram("theta", theta)
         # expanded version for internal purposes
         self._log_alpha = tf.expand_dims(self.log_alpha, 0)
-        n_vars = self.dim / self.batch_size
+        n_vars = self.dim // self.batch_size
         self.n_vars = n_vars
         self.batch_log_temperature = tf.Variable(
             [np.log(.5) for i in range(n_vars)],
