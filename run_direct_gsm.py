@@ -7,15 +7,15 @@ import argparse
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--method', type=str, default='direct',
-                    help='direct, gsm or unbiased method')
+                    help='direct, gsm or unbiased method (default=direct)')
 parser.add_argument('--ds', type=str, default='mnist',
-                    help='mnist, fashion-mnist or omniglot')
+                    help='mnist, fashion-mnist or omniglot (default=mnist)')
 parser.add_argument('--seed', type=int, default=775,
                     help='random seed')
 parser.add_argument('--N', type=int, default=1,
-                    help='dimension size of the latent space z (number of rows)')
+                    help='dimension size of the latent space z (number of rows, default=1)')
 parser.add_argument('--K', type=int, default=10,
-                    help='dimension size of the latent space z (number of columns)')
+                    help='dimension size of the latent space z (number of columns, default=10)')
 
 args = parser.parse_args()
 
@@ -58,4 +58,5 @@ def run(params):
         results = unbiased.training_procedure(params)
     return results
 
+run(params)
 
