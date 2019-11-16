@@ -184,8 +184,7 @@ class Direct_VAE:
         training_time = []
         for i, (im, _) in enumerate(train_loader):
             start = time.time()
-            images = to_var(im.view(im.size(0), -1))
-            print images[0]
+            images = to_var(im.view(im.size(0), -1))            
             bs = im.size(0)
             ground_truth = images.repeat(self.M,1)
             # forward
