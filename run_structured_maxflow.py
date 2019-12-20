@@ -21,7 +21,7 @@ params = {'num_epochs': 300,
             'anneal_rate':1e-5,
             'min_eps':0.1,
             'structure': True,
-            'dataset':'omniglot',
+            'dataset':'fashion-mnist',
             'split_valid':False,
             'binarize':True,
             'random_seed':777,
@@ -264,6 +264,7 @@ class Direct_VAE:
         self.M = params['gumbels']
         nll_bce = bce_sum/len(test_loader)
         return nll_bce
+        
     def compute_encoder_gradients(self,z_hard,phi_x_g,ground_truth,epsilon=1.0):
         N = self.N
         K = self.K

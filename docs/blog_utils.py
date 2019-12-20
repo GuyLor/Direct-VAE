@@ -40,7 +40,7 @@ def get_data(batch_size,dataset='mnist'):
         shuffle=True)
     return tr,ts
 
-def sample_gumbel(logits,beta=2.0,standard_gumbel=None, eps=1e-20):
+def sample_gumbel(logits,beta=1.0,standard_gumbel=None, eps=1e-20):
     if standard_gumbel is None:
         g = torch.distributions.gumbel.Gumbel(logits,beta*torch.ones_like(logits))    
         return g.sample()
@@ -87,7 +87,7 @@ def ncr(n, r):
     denom = ft.reduce(op.mul, range(1, r+1), 1)
     return numer//denom
 
-def get_argmax_and_max(phi_i, phi_ij):
+def get_argmax_and_max_maxflow(phi_i, phi_ij):
     # e.g.
     #n=3
     #phi_i = [phi_0, phi_1, phi_2]
@@ -121,7 +121,7 @@ def argmax_maxflow(h_list):
     k_batch = []
     for h_i,h_ij in h_list:
         h = h_i[:,1] - h_i[:,0]
-        k,_ = get_argmax_and_max(h.detach().cpu().numpy().astype(float),
+        k,_ = get_argmax_and_max_maxflow(h.detach().cpu().numpy().astype(float),
                                        h_ij.reshape(-1).detach().cpu().numpy().astype(float))
         k_batch.append(k)
     k =torch.tensor(k_batch,dtype=torch.long)
@@ -131,7 +131,6 @@ def z_hat(z,h_g,N,K):
     h_g = h_g.view(-1,K)
     z = F.one_hot(z,K).float()
     z_copy = z.view(-1,N,K)
-    
     new_batch = []
     for n in range(N):
         a_clone = z_copy.clone()
@@ -144,6 +143,17 @@ def z_hat(z,h_g,N,K):
             new_batch.append(clone2)
     new_batch = torch.cat(new_batch,1).view(-1,N*2)
     return new_batch
+
+def z_hat_bitwise(z):    
+    new_batch = []
+    N = z.size(-1)
+    for n in range(N):
+        a_clone = z.clone().bool()
+        a_clone[:,n] = ~ a_clone[:,n]
+        new_batch.append(a_clone.unsqueeze(1).float())
+
+    new_batch = torch.cat(new_batch,1)
+    return new_batch.view(-1,N)
 
 def h_i_and_h_ij_grads(h_i,h_ij,f_theta,z_opt,epsilon=1.0,solver= 'maxflow'):
     K = h_i.size(-1)

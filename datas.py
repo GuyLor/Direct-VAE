@@ -51,7 +51,7 @@ def get_balanced_dataset(ds,size = 100, num_classes = 10):
 def get_pytorch_mnist_datasets(fashion = False):
     transform = transforms.ToTensor()
     ds = datasets.FashionMNIST if fashion else datasets.MNIST
-    root = './data' #/FashionMNIST' if fashion else './data'
+    root = './data/FashionMNIST' if fashion else './data/MNIST'
     train_dataset = ds(root=root,
                            train=True,
                            transform=transform,
